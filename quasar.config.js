@@ -13,6 +13,7 @@ const ESLintPlugin = require('eslint-webpack-plugin')
 
 
 const { configure } = require('quasar/wrappers');
+const { BytenodeWebpackPlugin } = require("@herberttn/bytenode-webpack-plugin");
 
 module.exports = configure(function (ctx) {
   return {
@@ -205,13 +206,11 @@ module.exports = configure(function (ctx) {
 
       packager: {
         // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
-
         // OS X / Mac App Store
         // appBundleId: '',
         // appCategoryType: '',
         // osxSign: '',
         // protocol: 'myapp://path',
-
         // Windows only
         // win32metadata: { ... }
       },
@@ -222,20 +221,41 @@ module.exports = configure(function (ctx) {
         appId: 'quasar-project'
       },
 
+      extendWebPack(cfg) {
+        cfg.output.filename = "[name].js";
+        cfg.output.devtoolModuleFilenameTemplate = "[absolute-resource-path]";
+        cfg.plugins.push(
+          new BytenodeWebpackPlugin({ compileForElectron: true })
+        );
+        cfg.target = "electron-renderer";
+      },
+
       // "chain" is a webpack-chain object https://github.com/neutrinojs/webpack-chain
       
       chainWebpackMain (chain) {
         chain.plugin('eslint-webpack-plugin')
           .use(ESLintPlugin, [{ extensions: [ 'js' ] }])
       },
-      
 
       
-      chainWebpackPreload (chain) {
-        chain.plugin('eslint-webpack-plugin')
-          .use(ESLintPlugin, [{ extensions: [ 'js' ] }])
+      extendWebpackMain(cfg) {
+        cfg.output.filename = "[name].js";
+        cfg.output.devtoolModuleFilenameTemplate = "[absolute-resource-path]";
+        cfg.plugins.push(
+          new BytenodeWebpackPlugin({ compileForElectron: true })
+        );
+        cfg.target = "electron-main";
       },
       
-    }
-  }
+
+      extendWebpackPreload(cfg) {
+        cfg.output.filename = "[name].js";
+        cfg.output.devtoolModuleFilenameTemplate = "[absolute-resource-path]";
+        cfg.plugins.push(
+          new BytenodeWebpackPlugin({ compileForElectron: true })
+        );
+        cfg.target = "electron-preload";
+      },
+    },
+  };
 });
